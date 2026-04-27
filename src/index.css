@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark mode is the only mode — values defined here apply globally. */
+    /* Background: deep navy #0A1628 */
+    --background: 215 60% 10%;
+    --foreground: 220 14% 90%; /* #E5E7EB */
+
+    /* Surface/card: slightly lighter navy #0F1E33 */
+    --card: 215 53% 13%;
+    --card-foreground: 220 14% 90%;
+
+    --popover: 215 53% 13%;
+    --popover-foreground: 220 14% 90%;
+
+    /* Primary accent: electric blue #3B82F6 */
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 14% 96%;
+
+    --secondary: 215 40% 18%;
+    --secondary-foreground: 220 14% 90%;
+
+    --muted: 215 40% 18%;
+    --muted-foreground: 215 20% 65%; /* ~#94A3B8 */
+
+    --accent: 213 94% 68%; /* lighter blue #60A5FA for hover/glow */
+    --accent-foreground: 215 60% 10%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 220 14% 96%;
+
+    --border: 215 40% 22%;
+    --input: 215 40% 22%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+}
+
+@layer utilities {
+  .glass {
+    background-color: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid hsl(var(--border) / 0.8);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
+      0 8px 24px -12px hsl(0 0% 0% / 0.5);
+  }
+
+  .font-numeric {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
