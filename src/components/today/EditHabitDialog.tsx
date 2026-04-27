@@ -17,16 +17,25 @@ import { ALL_CATEGORIES } from '@/lib/categories';
 const FREQUENCIES: Frequency[] = ['Daily', 'Weekday', '6x/week', 'Weekly', 'Monthly'];
 const TIMES: TimeOfDay[] = ['Morning', 'Midday', 'Evening', 'Anytime'];
 
+export type HabitFormValues = {
+  name: string;
+  category: Category;
+  frequency: Frequency;
+  timeOfDay: TimeOfDay;
+  milestoneId?: string;
+};
+
 type Props = {
-  habit: Habit | null;
+  habit: Habit | null; // null + open=true => create mode
   milestones: Milestone[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (patch: Partial<Habit>) => void;
-  onDelete: () => void;
+  onSave: (values: HabitFormValues) => void;
+  onDelete?: () => void;
 };
 
 export function EditHabitDialog({ habit, milestones, open, onOpenChange, onSave, onDelete }: Props) {
+  const isCreate = habit === null;
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category>('Body');
   const [frequency, setFrequency] = useState<Frequency>('Daily');
@@ -34,14 +43,21 @@ export function EditHabitDialog({ habit, milestones, open, onOpenChange, onSave,
   const [milestoneId, setMilestoneId] = useState<string>('');
 
   useEffect(() => {
+    if (!open) return;
     if (habit) {
       setName(habit.name);
       setCategory(habit.category);
       setFrequency(habit.frequency);
       setTimeOfDay(habit.timeOfDay);
       setMilestoneId(habit.milestoneId ?? '');
+    } else {
+      setName('');
+      setCategory('Body');
+      setFrequency('Daily');
+      setTimeOfDay('Anytime');
+      setMilestoneId('');
     }
-  }, [habit]);
+  }, [habit, open]);
 
   const handleSave = () => {
     if (!name.trim()) return;
@@ -56,7 +72,7 @@ export function EditHabitDialog({ habit, milestones, open, onOpenChange, onSave,
   };
 
   const handleDelete = () => {
-    onDelete();
+    onDelete?.();
     onOpenChange(false);
   };
 
@@ -64,8 +80,10 @@ export function EditHabitDialog({ habit, milestones, open, onOpenChange, onSave,
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit habit</DialogTitle>
-          <DialogDescription>Tweak the details, save, or delete.</DialogDescription>
+          <DialogTitle>{isCreate ? 'New habit' : 'Edit habit'}</DialogTitle>
+          <DialogDescription>
+            {isCreate ? 'Add a new habit to your tracker.' : 'Tweak the details, save, or delete.'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
@@ -144,15 +162,19 @@ export function EditHabitDialog({ habit, milestones, open, onOpenChange, onSave,
         </div>
 
         <DialogFooter className="mt-2 flex-row justify-between gap-2 sm:justify-between">
-          <Button variant="destructive" size="sm" onClick={handleDelete}>
-            Delete
-          </Button>
+          {!isCreate && onDelete ? (
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              Delete
+            </Button>
+          ) : (
+            <span />
+          )}
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button size="sm" onClick={handleSave} disabled={!name.trim()}>
-              Save
+              {isCreate ? 'Create' : 'Save'}
             </Button>
           </div>
         </DialogFooter>

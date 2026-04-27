@@ -12,7 +12,7 @@ export function PlanTomorrowCTA({ onClick }: Props) {
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-3"
+      className="pointer-events-none fixed inset-x-0 bottom-14 z-30 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3"
     >
       <div className="mx-auto max-w-md">
         <motion.button
