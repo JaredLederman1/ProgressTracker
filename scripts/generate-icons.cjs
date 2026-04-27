@@ -128,8 +128,10 @@ fs.mkdirSync(outDir, { recursive: true });
 const targets = [
   { name: 'icon-192.png', size: 192, padding: 0 },
   { name: 'icon-512.png', size: 512, padding: 0 },
-  // Maskable icon needs ~10% safe-zone padding so the checkmark survives masking.
-  { name: 'icon-512-maskable.png', size: 512, padding: 64 },
+  // Maskable spec: outer 20% (10% per side) gets cropped on round/squircle
+  // masks. We use ~19% padding so the checkmark sits well inside the safe
+  // zone with margin to spare on aggressive squircles.
+  { name: 'icon-512-maskable.png', size: 512, padding: 96 },
 ];
 
 for (const t of targets) {

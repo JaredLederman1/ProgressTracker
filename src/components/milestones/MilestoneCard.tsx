@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MoreVertical, Plus } from 'lucide-react';
 import type { Milestone } from '@/types';
@@ -17,6 +17,19 @@ export function MilestoneCard({ milestone, onIncrement, onEdit, onDelete, dense 
   const [floaterId, setFloaterId] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const counter = useRef(0);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!menuRef.current) return;
+      if (menuRef.current.contains(e.target as Node)) return;
+      setMenuOpen(false);
+    };
+    // Capture phase so this fires before any inner click handlers.
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [menuOpen]);
 
   const complete = milestone.count >= milestone.target;
   const pct = Math.min(100, (milestone.count / Math.max(1, milestone.target)) * 100);
@@ -108,7 +121,7 @@ export function MilestoneCard({ milestone, onIncrement, onEdit, onDelete, dense 
           Log session
         </Button>
 
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             type="button"
             aria-label="More options"
