@@ -90,9 +90,9 @@ export function TodayView({ tracker }: Props) {
             block={block}
             renderHabit={(item) => {
               const habit = findHabitByName(state.habits, item.habitName);
-              if (!habit || !habit.active) {
-                return <NotConfiguredRow key={item.id} name={item.habitName} />;
-              }
+              // Deleted or archived scheduled habits drop out of Today
+              // entirely — no placeholder, no crossed-out row.
+              if (!habit || !habit.active) return null;
               const expected = isExpectedOn(habit, todayDate);
               if (!expected && !showAll) return null;
               const displayName = item.displayLabel ? item.displayLabel(todayDate) : undefined;
@@ -222,15 +222,3 @@ function ReminderRow({ text }: { text: string }) {
   );
 }
 
-function NotConfiguredRow({ name }: { name: string }) {
-  return (
-    <li className="flex items-start gap-2 px-1 py-1.5 pl-3 text-[14px] leading-relaxed text-muted-foreground/70">
-      <span className="select-none text-muted-foreground" aria-hidden>
-        ·
-      </span>
-      <span className="line-through">
-        {name} <span className="not-italic">(not configured)</span>
-      </span>
-    </li>
-  );
-}
