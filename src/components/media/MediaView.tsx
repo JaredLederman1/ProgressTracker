@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { Book, Film, Mic, Plus, Youtube, type LucideIcon } from 'lucide-react';
+import { Book, FileText, Film, Mic, Plus, Youtube, type LucideIcon } from 'lucide-react';
 import type { MediaEntry, MediaType } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,10 +22,11 @@ const TYPE_ICONS: Record<MediaType, LucideIcon> = {
   Movie: Film,
   YouTube: Youtube,
   Podcast: Mic,
+  Article: FileText,
 };
 
 type Filter = 'All' | MediaType;
-const FILTERS: Filter[] = ['All', 'Book', 'Movie', 'YouTube', 'Podcast'];
+const FILTERS: Filter[] = ['All', 'Book', 'Movie', 'YouTube', 'Podcast', 'Article'];
 
 type Props = {
   tracker: ReturnType<typeof useTracker>;
@@ -38,7 +39,10 @@ export function MediaView({ tracker }: Props) {
   const [pendingDelete, setPendingDelete] = useState<MediaEntry | null>(null);
 
   const sorted = useMemo(
-    () => [...state.media].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    () =>
+      [...state.media].sort((a, b) =>
+        a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0,
+      ),
     [state.media],
   );
   const filtered = useMemo(
@@ -48,7 +52,7 @@ export function MediaView({ tracker }: Props) {
   const grouped = useMemo(() => {
     if (filter !== 'All') return null;
     const groups: { type: MediaType; entries: MediaEntry[] }[] = [];
-    const order: MediaType[] = ['Book', 'Movie', 'YouTube', 'Podcast'];
+    const order: MediaType[] = ['Book', 'Movie', 'YouTube', 'Podcast', 'Article'];
     for (const t of order) {
       const entries = sorted.filter((m) => m.type === t);
       if (entries.length > 0) groups.push({ type: t, entries });

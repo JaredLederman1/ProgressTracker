@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import type { MediaType } from '@/types';
 
-const TYPES: MediaType[] = ['Book', 'Movie', 'YouTube', 'Podcast'];
+const TYPES: MediaType[] = ['Book', 'Movie', 'YouTube', 'Podcast', 'Article'];
 
 type Props = {
   open: boolean;

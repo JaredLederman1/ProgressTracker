@@ -11,7 +11,7 @@ export type Frequency = 'Daily' | 'Weekday' | '6x/week' | 'Weekly' | 'Monthly';
 
 export type TimeOfDay = 'Morning' | 'Midday' | 'Evening' | 'Anytime';
 
-export type MediaType = 'Book' | 'Movie' | 'YouTube' | 'Podcast';
+export type MediaType = 'Book' | 'Movie' | 'YouTube' | 'Podcast' | 'Article';
 
 export type Habit = {
   id: string;

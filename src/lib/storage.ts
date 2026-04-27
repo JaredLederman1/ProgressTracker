@@ -1,5 +1,5 @@
 import type { AppState } from '@/types';
-import { buildSeedHabits } from './seed';
+import { buildSeedHabits, buildSeedMedia } from './seed';
 
 export const STORAGE_KEY = 'tracker.v1';
 
@@ -9,7 +9,7 @@ export function defaultState(): AppState {
     habits: buildSeedHabits(),
     adHocTasks: [],
     milestones: [],
-    media: [],
+    media: buildSeedMedia(),
     entries: {},
   };
 }
@@ -34,6 +34,15 @@ export function loadState(): AppState {
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
     if (!isValidState(parsed)) return defaultState();
+
+    // One-time backfill: users who installed before media seeding existed
+    // have an empty media array. Populate it on next load so they get the
+    // Notion library without losing streaks/entries via Reset. Remove this
+    // block when bumping to v2 (any v2 migration will run before this).
+    if (parsed.version === 1 && parsed.media.length === 0) {
+      parsed.media = buildSeedMedia();
+    }
+
     return parsed;
   } catch {
     return defaultState();
