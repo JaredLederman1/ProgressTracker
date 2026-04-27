@@ -12,7 +12,7 @@ export function Header({ date, streak, onOpenSettings }: Props) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-md backdrop-saturate-150">
-      <div className="mx-auto flex max-w-md items-center justify-between px-5 py-4">
+      <div className="mx-auto flex max-w-md items-center justify-between px-5 pb-4 pt-[calc(env(safe-area-inset-top,0px)+16px)]">
         <div className="flex flex-col">
           <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Today
