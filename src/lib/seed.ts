@@ -33,10 +33,6 @@ const SEED_HABITS: SeedHabit[] = [
   // Emotional Regulation
   { name: 'Nightly journal', category: 'Emotional Regulation', frequency: 'Daily', timeOfDay: 'Evening' },
   { name: 'Hard conversation', category: 'Emotional Regulation', frequency: 'Weekly', timeOfDay: 'Anytime' },
-
-  // Appearance
-  { name: 'Tinted SPF', category: 'Appearance', frequency: 'Daily', timeOfDay: 'Morning' },
-  { name: 'Tongue scraper', category: 'Appearance', frequency: 'Daily', timeOfDay: 'Morning' },
 ];
 
 type SeedMedia = { title: string; type: MediaType };

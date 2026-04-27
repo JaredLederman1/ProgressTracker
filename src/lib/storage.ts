@@ -43,6 +43,16 @@ export function loadState(): AppState {
       parsed.media = buildSeedMedia();
     }
 
+    // One-time cleanup: drop the Tinted SPF / Tongue scraper habits that
+    // were removed from the seed. Existing users have them in their saved
+    // state; strip them so they don't render anywhere. Orphaned IDs in
+    // entries[date].completedHabits are harmless (the heatmap and streak
+    // calcs ignore IDs that don't resolve to a habit). Remove at v2.
+    const REMOVED_HABIT_NAMES = new Set(['Tinted SPF', 'Tongue scraper']);
+    if (parsed.version === 1 && parsed.habits.some((h) => REMOVED_HABIT_NAMES.has(h.name))) {
+      parsed.habits = parsed.habits.filter((h) => !REMOVED_HABIT_NAMES.has(h.name));
+    }
+
     return parsed;
   } catch {
     return defaultState();

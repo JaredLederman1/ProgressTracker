@@ -11,6 +11,9 @@ type Props = {
   checked: boolean;
   dimmed?: boolean;
   notExpected?: boolean;
+  // Optional display label override — used by the schedule's rotating Lift
+  // split. Falls back to habit.name when absent.
+  displayName?: string;
   milestone?: Milestone;
   onToggle: () => void;
   onLongPress: () => void;
@@ -33,6 +36,7 @@ export function HabitRow({
   checked,
   dimmed,
   notExpected,
+  displayName,
   milestone,
   onToggle,
   onLongPress,
@@ -97,7 +101,7 @@ export function HabitRow({
             )}
           >
             <span className="relative inline-block">
-              {habit.name}
+              {displayName ?? habit.name}
               <motion.span
                 aria-hidden
                 initial={false}

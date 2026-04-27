@@ -1,14 +1,12 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { AdHocTask, Habit, TimeOfDay } from '@/types';
+import type { AdHocTask, Habit } from '@/types';
 import { todayKey } from '@/lib/dates';
 import { isExpectedOn } from '@/lib/frequency';
 import {
   DAILY_SCHEDULE,
-  SCHEDULED_HABIT_NAMES,
   findHabitByName,
   type ScheduleBlock,
-  type ScheduleItem,
 } from '@/lib/schedule';
 import { useTracker } from '@/hooks/useTracker';
 import { useNow } from '@/hooks/useNow';
@@ -21,7 +19,6 @@ import { PlanTomorrowCTA } from './PlanTomorrowCTA';
 import { PlanTomorrowModal } from './PlanTomorrowModal';
 
 const PLAN_HOUR_GATE = 20; // 8 PM local
-const TIME_GROUP_ORDER: TimeOfDay[] = ['Morning', 'Midday', 'Evening', 'Anytime'];
 
 type Props = {
   tracker: ReturnType<typeof useTracker>;
@@ -60,43 +57,8 @@ export function TodayView({ tracker }: Props) {
     [state.adHocTasks, today],
   );
 
-  // Habits NOT in the daily schedule template — these go in the OTHER block.
-  // When showAll is on, scheduled habits that aren't expected today also
-  // collect here (dimmed) per the spec: "regardless of which schedule block
-  // they'd otherwise belong to."
-  const otherHabits = useMemo(() => {
-    const out: { habit: Habit; expected: boolean }[] = [];
-    for (const h of state.habits) {
-      if (!h.active) continue;
-      const isInSchedule = SCHEDULED_HABIT_NAMES.has(h.name);
-      const expected = isExpectedOn(h, todayDate);
-      if (isInSchedule) {
-        if (!expected && showAll) out.push({ habit: h, expected: false });
-      } else {
-        if (expected) out.push({ habit: h, expected: true });
-        else if (showAll) out.push({ habit: h, expected: false });
-      }
-    }
-    return out;
-  }, [state.habits, todayDate, showAll]);
-
-  const otherByTime = useMemo(() => groupByTime(otherHabits), [otherHabits]);
-
   const hasUncheckedAdHoc = todayTasks.some((t) => !t.completed);
   const showCTA = now.getHours() >= PLAN_HOUR_GATE || hasUncheckedAdHoc;
-
-  const renderHabitRow = (habit: Habit, opts?: { dimmed?: boolean; notExpected?: boolean }) => (
-    <HabitRow
-      key={habit.id}
-      habit={habit}
-      checked={completedToday.includes(habit.id)}
-      dimmed={opts?.dimmed}
-      notExpected={opts?.notExpected}
-      milestone={habit.milestoneId ? milestonesById.get(habit.milestoneId) : undefined}
-      onToggle={() => toggleHabit(habit.id, today)}
-      onLongPress={() => setEditingHabit(habit)}
-    />
-  );
 
   return (
     <>
@@ -131,40 +93,25 @@ export function TodayView({ tracker }: Props) {
               if (!habit || !habit.active) {
                 return <NotConfiguredRow key={item.id} name={item.habitName} />;
               }
-              if (!isExpectedOn(habit, todayDate)) {
-                return null; // Hidden by default; surfaces in OTHER when showAll is on.
-              }
-              return renderHabitRow(habit);
+              const expected = isExpectedOn(habit, todayDate);
+              if (!expected && !showAll) return null;
+              const displayName = item.displayLabel ? item.displayLabel(todayDate) : undefined;
+              return (
+                <HabitRow
+                  key={habit.id}
+                  habit={habit}
+                  checked={completedToday.includes(habit.id)}
+                  dimmed={!expected}
+                  notExpected={!expected}
+                  displayName={displayName}
+                  milestone={habit.milestoneId ? milestonesById.get(habit.milestoneId) : undefined}
+                  onToggle={() => toggleHabit(habit.id, today)}
+                  onLongPress={() => setEditingHabit(habit)}
+                />
+              );
             }}
           />
         ))}
-
-        {otherHabits.length > 0 && (
-          <section className="mt-6">
-            <BlockHeader>Other</BlockHeader>
-            <div className="grid gap-4">
-              {TIME_GROUP_ORDER.map((time) => {
-                const list = otherByTime[time];
-                if (list.length === 0) return null;
-                return (
-                  <div key={time}>
-                    {time !== 'Anytime' && <SubLabel>{time}</SubLabel>}
-                    <motion.ul layout className="grid gap-2">
-                      <AnimatePresence initial={false}>
-                        {list.map(({ habit, expected }) =>
-                          renderHabitRow(habit, {
-                            dimmed: !expected,
-                            notExpected: !expected,
-                          }),
-                        )}
-                      </AnimatePresence>
-                    </motion.ul>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
 
         <div className="glass mt-8 flex items-center justify-between rounded-xl px-4 py-3">
           <div>
@@ -225,12 +172,8 @@ function ScheduleBlockSection({
   renderHabit,
 }: {
   block: ScheduleBlock;
-  renderHabit: (item: Extract<ScheduleItem, { kind: 'habit' }>) => React.ReactNode;
+  renderHabit: (item: Extract<ScheduleBlock['items'][number], { kind: 'habit' }>) => React.ReactNode;
 }) {
-  // Walk the items in declared order, rendering each (or nothing if a habit
-  // is hidden). If everything in the block resolves to nothing, hide the
-  // block header too — rare in practice (only happens if every habit in a
-  // block is non-expected and the block has no reminders).
   const rendered: React.ReactNode[] = [];
   for (const item of block.items) {
     if (item.kind === 'reminder') {
@@ -268,20 +211,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SubLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
-      {children}
-    </h3>
-  );
-}
-
 function ReminderRow({ text }: { text: string }) {
   return (
-    <li
-      className="flex items-start gap-2 px-1 py-1.5 pl-3 text-[14px] leading-relaxed text-muted-foreground/80 opacity-60"
-      aria-hidden="false"
-    >
+    <li className="flex items-start gap-2 px-1 py-1.5 pl-3 text-[14px] leading-relaxed text-muted-foreground/80 opacity-60">
       <span className="select-none text-muted-foreground" aria-hidden>
         ·
       </span>
@@ -301,19 +233,4 @@ function NotConfiguredRow({ name }: { name: string }) {
       </span>
     </li>
   );
-}
-
-function groupByTime(
-  items: { habit: Habit; expected: boolean }[],
-): Record<TimeOfDay, { habit: Habit; expected: boolean }[]> {
-  const groups: Record<TimeOfDay, { habit: Habit; expected: boolean }[]> = {
-    Morning: [],
-    Midday: [],
-    Evening: [],
-    Anytime: [],
-  };
-  for (const item of items) {
-    groups[item.habit.timeOfDay].push(item);
-  }
-  return groups;
 }

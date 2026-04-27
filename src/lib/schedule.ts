@@ -1,9 +1,17 @@
 // Editing this file changes the daily schedule. Habit lines must match Habit.name exactly.
 
+import { differenceInCalendarDays, parseISO } from 'date-fns';
 import type { Habit } from '@/types';
 
 export type ReminderItem = { kind: 'reminder'; id: string; text: string };
-export type HabitItem = { kind: 'habit'; id: string; habitName: string };
+export type HabitItem = {
+  kind: 'habit';
+  id: string;
+  habitName: string;
+  // Optional per-day display label override. Returns the string shown in the
+  // row instead of habit.name. Used for the rotating Lift split.
+  displayLabel?: (date: Date) => string;
+};
 export type ScheduleItem = ReminderItem | HabitItem;
 
 export type ScheduleBlock = {
@@ -11,6 +19,17 @@ export type ScheduleBlock = {
   label: string;
   items: ScheduleItem[];
 };
+
+// 4-day rotating split. Anchor is the day labeled "Chest + Back" — every other
+// day is computed relative to it via differenceInCalendarDays.
+const LIFT_CYCLE = ['Chest + Back', 'Legs + Abs', 'Shoulders + Arms', 'Functional Lift'] as const;
+const LIFT_ANCHOR = parseISO('2026-04-27'); // 2026-04-27 = day 0 (Chest + Back)
+
+export function liftLabel(date: Date): string {
+  const days = differenceInCalendarDays(date, LIFT_ANCHOR);
+  const idx = ((days % LIFT_CYCLE.length) + LIFT_CYCLE.length) % LIFT_CYCLE.length;
+  return `Lift: ${LIFT_CYCLE[idx]}`;
+}
 
 export const DAILY_SCHEDULE: ScheduleBlock[] = [
   {
@@ -20,7 +39,8 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
       { kind: 'reminder', id: 'wake', text: 'Wake 7am' },
       { kind: 'habit', id: 'h-bright-light', habitName: 'Bright light exposure' },
       { kind: 'habit', id: 'h-tefillin', habitName: 'Tefillin' },
-      { kind: 'habit', id: 'h-lift', habitName: 'Lift' },
+      { kind: 'habit', id: 'h-prehab', habitName: 'Functional/prehab session' },
+      { kind: 'habit', id: 'h-lift', habitName: 'Lift', displayLabel: liftLabel },
       { kind: 'habit', id: 'h-cold-shower', habitName: 'Cold shower (60s)' },
       { kind: 'reminder', id: 'breakfast', text: 'Breakfast' },
     ],
@@ -31,7 +51,6 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     items: [
       { kind: 'reminder', id: 'midday-work', text: 'Class / work / Illumin' },
       { kind: 'reminder', id: 'lunch', text: 'Lunch (track macros)' },
-      { kind: 'habit', id: 'h-meditation', habitName: 'Meditation' },
       { kind: 'reminder', id: 'caffeine-cutoff', text: 'Caffeine cutoff: noon' },
     ],
   },
@@ -40,6 +59,9 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     label: 'Afternoon',
     items: [
       { kind: 'reminder', id: 'afternoon-work', text: 'Class / work / Illumin' },
+      { kind: 'habit', id: 'h-boxing-skill', habitName: 'Boxing skill work' },
+      { kind: 'habit', id: 'h-light-sparring', habitName: 'Light sparring' },
+      { kind: 'habit', id: 'h-meal-prep', habitName: 'Sunday meal prep' },
       { kind: 'habit', id: 'h-reading', habitName: 'Reading' },
     ],
   },
@@ -54,6 +76,8 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
         text: 'Social / friends / girlfriend / boxing or sparring on assigned days',
       },
       { kind: 'habit', id: 'h-mobility', habitName: 'APT/posture mobility routine' },
+      { kind: 'habit', id: 'h-hard-convo', habitName: 'Hard conversation' },
+      { kind: 'habit', id: 'h-unstructured', habitName: 'Unstructured hour, no input' },
       { kind: 'reminder', id: 'dim-lights', text: 'Dim lights by 9pm' },
     ],
   },
@@ -62,7 +86,10 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     label: 'Wind-down',
     items: [
       { kind: 'reminder', id: 'phone-out', text: 'Phone out of bedroom by 10:30pm' },
+      { kind: 'habit', id: 'h-meditation', habitName: 'Meditation' },
+      { kind: 'habit', id: 'h-breathing', habitName: 'Diaphragmatic breathing' },
       { kind: 'habit', id: 'h-journal', habitName: 'Nightly journal' },
+      { kind: 'habit', id: 'h-weekly-review', habitName: 'Weekly review' },
       {
         kind: 'reminder',
         id: 'supplements',
@@ -72,12 +99,6 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     ],
   },
 ];
-
-export const SCHEDULED_HABIT_NAMES: ReadonlySet<string> = new Set(
-  DAILY_SCHEDULE.flatMap((b) => b.items)
-    .filter((i): i is HabitItem => i.kind === 'habit')
-    .map((i) => i.habitName),
-);
 
 export function findHabitByName(habits: Habit[], name: string): Habit | undefined {
   return habits.find((h) => h.name === name);
