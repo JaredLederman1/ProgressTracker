@@ -1,4 +1,4 @@
-import { format, parse } from 'date-fns';
+import { addDays, format, parse } from 'date-fns';
 
 const KEY_FORMAT = 'yyyy-MM-dd';
 
@@ -12,4 +12,8 @@ export function parseKey(key: string): Date {
 
 export function todayKey(): string {
   return formatKey(new Date());
+}
+
+export function tomorrowKey(): string {
+  return formatKey(addDays(new Date(), 1));
 }
