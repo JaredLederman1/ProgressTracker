@@ -42,7 +42,7 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
       { kind: 'habit', id: 'h-prehab', habitName: 'Functional/prehab session' },
       { kind: 'habit', id: 'h-lift', habitName: 'Lift', displayLabel: liftLabel },
       { kind: 'habit', id: 'h-cold-shower', habitName: 'Cold shower (60s)' },
-      { kind: 'reminder', id: 'breakfast', text: 'Breakfast' },
+      { kind: 'habit', id: 'h-breakfast', habitName: 'Standard breakfast' },
     ],
   },
   {
@@ -50,7 +50,7 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     label: 'Midday',
     items: [
       { kind: 'reminder', id: 'midday-work', text: 'Class / work / Illumin' },
-      { kind: 'reminder', id: 'lunch', text: 'Lunch (track macros)' },
+      { kind: 'habit', id: 'h-protein-shake', habitName: 'Protein shake' },
       { kind: 'reminder', id: 'caffeine-cutoff', text: 'Caffeine cutoff: noon' },
     ],
   },
@@ -69,7 +69,7 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     id: 'evening',
     label: 'Evening',
     items: [
-      { kind: 'reminder', id: 'dinner', text: 'Dinner (last meal by 8pm)' },
+      { kind: 'habit', id: 'h-dinner', habitName: 'Standard dinner' },
       {
         kind: 'reminder',
         id: 'social',
@@ -85,16 +85,12 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     id: 'wind-down',
     label: 'Wind-down',
     items: [
-      { kind: 'reminder', id: 'phone-out', text: 'Phone out of bedroom by 10:30pm' },
+      { kind: 'habit', id: 'h-phone-out', habitName: 'Phone out of bedroom' },
       { kind: 'habit', id: 'h-meditation', habitName: 'Meditation' },
       { kind: 'habit', id: 'h-breathing', habitName: 'Diaphragmatic breathing' },
       { kind: 'habit', id: 'h-journal', habitName: 'Nightly journal' },
       { kind: 'habit', id: 'h-weekly-review', habitName: 'Weekly review' },
-      {
-        kind: 'reminder',
-        id: 'supplements',
-        text: 'Supplements: magnesium glycinate, glycine, L-theanine, ashwagandha',
-      },
+      { kind: 'habit', id: 'h-supplements', habitName: 'Supplements' },
       { kind: 'reminder', id: 'sleep', text: 'Sleep 11pm' },
     ],
   },

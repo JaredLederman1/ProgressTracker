@@ -1,4 +1,4 @@
-import type { AppState } from '@/types';
+import type { AppState, Category, Frequency, Habit, TimeOfDay } from '@/types';
 import { buildSeedHabits, buildSeedMedia } from './seed';
 
 export const STORAGE_KEY = 'tracker.v1';
@@ -51,6 +51,45 @@ export function loadState(): AppState {
     const REMOVED_HABIT_NAMES = new Set(['Tinted SPF', 'Tongue scraper']);
     if (parsed.version === 1 && parsed.habits.some((h) => REMOVED_HABIT_NAMES.has(h.name))) {
       parsed.habits = parsed.habits.filter((h) => !REMOVED_HABIT_NAMES.has(h.name));
+    }
+
+    // Backfill new checkable schedule habits added after the initial seed,
+    // and update Boxing skill work to Tue/Thu only. Remove at v2.
+    if (parsed.version === 1) {
+      const existing = new Set(parsed.habits.map((h) => h.name));
+      const created = new Date().toISOString();
+      const additions: Array<{
+        name: string;
+        category: Category;
+        frequency: Frequency;
+        timeOfDay: TimeOfDay;
+      }> = [
+        { name: 'Standard breakfast', category: 'Body', frequency: 'Daily', timeOfDay: 'Morning' },
+        { name: 'Protein shake', category: 'Body', frequency: 'Daily', timeOfDay: 'Midday' },
+        { name: 'Standard dinner', category: 'Body', frequency: 'Daily', timeOfDay: 'Evening' },
+        { name: 'Phone out of bedroom', category: 'Sleep', frequency: 'Daily', timeOfDay: 'Evening' },
+        { name: 'Supplements', category: 'Body', frequency: 'Daily', timeOfDay: 'Evening' },
+      ];
+      const toAdd: Habit[] = additions
+        .filter((a) => !existing.has(a.name))
+        .map((a) => ({
+          id: crypto.randomUUID(),
+          name: a.name,
+          category: a.category,
+          frequency: a.frequency,
+          timeOfDay: a.timeOfDay,
+          active: true,
+          createdAt: created,
+        }));
+      if (toAdd.length > 0) {
+        parsed.habits = [...parsed.habits, ...toAdd];
+      }
+
+      parsed.habits = parsed.habits.map((h) =>
+        h.name === 'Boxing skill work' && h.frequency !== 'Tue/Thu'
+          ? { ...h, frequency: 'Tue/Thu' as Frequency }
+          : h,
+      );
     }
 
     return parsed;

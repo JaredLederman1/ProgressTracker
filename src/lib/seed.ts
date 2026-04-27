@@ -12,10 +12,14 @@ const SEED_HABITS: SeedHabit[] = [
   { name: 'Lift', category: 'Body', frequency: 'Daily', timeOfDay: 'Anytime' },
   { name: 'Functional/prehab session', category: 'Body', frequency: '6x/week', timeOfDay: 'Anytime' },
   { name: 'Light sparring', category: 'Body', frequency: 'Weekly', timeOfDay: 'Anytime' },
-  { name: 'Boxing skill work', category: 'Body', frequency: '6x/week', timeOfDay: 'Anytime' },
+  { name: 'Boxing skill work', category: 'Body', frequency: 'Tue/Thu', timeOfDay: 'Anytime' },
   { name: 'APT/posture mobility routine', category: 'Body', frequency: 'Daily', timeOfDay: 'Anytime' },
   { name: 'Cold shower (60s)', category: 'Body', frequency: 'Daily', timeOfDay: 'Morning' },
   { name: 'Sunday meal prep', category: 'Body', frequency: 'Weekly', timeOfDay: 'Anytime' },
+  { name: 'Standard breakfast', category: 'Body', frequency: 'Daily', timeOfDay: 'Morning' },
+  { name: 'Protein shake', category: 'Body', frequency: 'Daily', timeOfDay: 'Midday' },
+  { name: 'Standard dinner', category: 'Body', frequency: 'Daily', timeOfDay: 'Evening' },
+  { name: 'Supplements', category: 'Body', frequency: 'Daily', timeOfDay: 'Evening' },
 
   // Mind
   { name: 'Reading', category: 'Mind', frequency: 'Daily', timeOfDay: 'Anytime' },
@@ -25,6 +29,7 @@ const SEED_HABITS: SeedHabit[] = [
   // Sleep
   { name: 'Bright light exposure', category: 'Sleep', frequency: 'Daily', timeOfDay: 'Morning' },
   { name: 'Diaphragmatic breathing', category: 'Sleep', frequency: 'Daily', timeOfDay: 'Anytime' },
+  { name: 'Phone out of bedroom', category: 'Sleep', frequency: 'Daily', timeOfDay: 'Evening' },
 
   // Spiritual
   { name: 'Tefillin', category: 'Spiritual', frequency: 'Weekday', timeOfDay: 'Morning' },

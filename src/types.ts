@@ -7,7 +7,7 @@ export type Category =
   | 'Appearance'
   | 'Custom';
 
-export type Frequency = 'Daily' | 'Weekday' | '6x/week' | 'Weekly' | 'Monthly';
+export type Frequency = 'Daily' | 'Weekday' | '6x/week' | 'Tue/Thu' | 'Weekly' | 'Monthly';
 
 export type TimeOfDay = 'Morning' | 'Midday' | 'Evening' | 'Anytime';
 

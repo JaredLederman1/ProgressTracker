@@ -11,6 +11,8 @@ export function isExpectedOn(habit: Habit, date: Date): boolean {
       return day >= 1 && day <= 5;
     case '6x/week':
       return day !== 0;
+    case 'Tue/Thu':
+      return day === 2 || day === 4;
     case 'Weekly':
       return day === 0;
     case 'Monthly':

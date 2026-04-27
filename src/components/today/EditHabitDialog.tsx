@@ -14,7 +14,7 @@ import { Select } from '@/components/ui/select';
 import type { Category, Frequency, Habit, Milestone, TimeOfDay } from '@/types';
 import { ALL_CATEGORIES } from '@/lib/categories';
 
-const FREQUENCIES: Frequency[] = ['Daily', 'Weekday', '6x/week', 'Weekly', 'Monthly'];
+const FREQUENCIES: Frequency[] = ['Daily', 'Weekday', '6x/week', 'Tue/Thu', 'Weekly', 'Monthly'];
 const TIMES: TimeOfDay[] = ['Morning', 'Midday', 'Evening', 'Anytime'];
 
 export type HabitFormValues = {

@@ -10,7 +10,6 @@ import {
 } from '@/lib/schedule';
 import { useTracker } from '@/hooks/useTracker';
 import { useNow } from '@/hooks/useNow';
-import { Switch } from '@/components/ui/switch';
 import { HabitRow } from './HabitRow';
 import { AdHocTaskRow } from './AdHocTaskRow';
 import { EditHabitDialog } from './EditHabitDialog';
@@ -40,7 +39,6 @@ export function TodayView({ tracker }: Props) {
   const today = todayKey();
   const todayDate = useMemo(() => new Date(), []);
 
-  const [showAll, setShowAll] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [editingTask, setEditingTask] = useState<AdHocTask | null>(null);
   const [planOpen, setPlanOpen] = useState(false);
@@ -93,16 +91,13 @@ export function TodayView({ tracker }: Props) {
               // Deleted or archived scheduled habits drop out of Today
               // entirely — no placeholder, no crossed-out row.
               if (!habit || !habit.active) return null;
-              const expected = isExpectedOn(habit, todayDate);
-              if (!expected && !showAll) return null;
+              if (!isExpectedOn(habit, todayDate)) return null;
               const displayName = item.displayLabel ? item.displayLabel(todayDate) : undefined;
               return (
                 <HabitRow
                   key={habit.id}
                   habit={habit}
                   checked={completedToday.includes(habit.id)}
-                  dimmed={!expected}
-                  notExpected={!expected}
                   displayName={displayName}
                   milestone={habit.milestoneId ? milestonesById.get(habit.milestoneId) : undefined}
                   onToggle={() => toggleHabit(habit.id, today)}
@@ -112,16 +107,6 @@ export function TodayView({ tracker }: Props) {
             }}
           />
         ))}
-
-        <div className="glass mt-8 flex items-center justify-between rounded-xl px-4 py-3">
-          <div>
-            <div className="text-sm font-medium">Show all habits</div>
-            <div className="font-numeric text-[11px] uppercase tracking-wide text-muted-foreground">
-              Reveal habits not expected today
-            </div>
-          </div>
-          <Switch checked={showAll} onCheckedChange={setShowAll} />
-        </div>
       </div>
 
       <AnimatePresence>{showCTA && <PlanTomorrowCTA onClick={() => setPlanOpen(true)} />}</AnimatePresence>
