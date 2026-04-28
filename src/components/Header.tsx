@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Flame, Settings } from 'lucide-react';
+import { Flame, RefreshCw, Settings } from 'lucide-react';
 
 type Props = {
   date: Date;
@@ -25,6 +25,14 @@ export function Header({ date, streak, onOpenSettings }: Props) {
             <span className="font-numeric text-sm font-semibold leading-none">{display}</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">streak</span>
           </div>
+          <button
+            type="button"
+            aria-label="Reload"
+            onClick={() => window.location.reload()}
+            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
           <button
             type="button"
             aria-label="Settings"

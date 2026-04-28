@@ -1,7 +1,7 @@
 // Editing this file changes the daily schedule. Habit lines must match Habit.name exactly.
 
 import { differenceInCalendarDays, parseISO } from 'date-fns';
-import type { Habit } from '@/types';
+import type { Habit, TimeOfDay } from '@/types';
 
 export type ReminderItem = { kind: 'reminder'; id: string; text: string };
 export type HabitItem = {
@@ -98,4 +98,24 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
 
 export function findHabitByName(habits: Habit[], name: string): Habit | undefined {
   return habits.find((h) => h.name === name);
+}
+
+// User-added habits (not present in DAILY_SCHEDULE) get appended to the block
+// matching their timeOfDay. Anytime falls into Afternoon since none of the
+// form's time-of-day options map there directly.
+export const TIME_OF_DAY_TO_BLOCK: Record<TimeOfDay, ScheduleBlock['id']> = {
+  Morning: 'morning',
+  Midday: 'midday',
+  Evening: 'evening',
+  Anytime: 'afternoon',
+};
+
+export function getScheduledHabitNames(): Set<string> {
+  const names = new Set<string>();
+  for (const block of DAILY_SCHEDULE) {
+    for (const item of block.items) {
+      if (item.kind === 'habit') names.add(item.habitName);
+    }
+  }
+  return names;
 }

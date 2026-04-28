@@ -6,6 +6,8 @@ import { isExpectedOn } from '@/lib/frequency';
 import {
   DAILY_SCHEDULE,
   findHabitByName,
+  getScheduledHabitNames,
+  TIME_OF_DAY_TO_BLOCK,
   type ScheduleBlock,
 } from '@/lib/schedule';
 import { useTracker } from '@/hooks/useTracker';
@@ -55,6 +57,23 @@ export function TodayView({ tracker }: Props) {
     [state.adHocTasks, today],
   );
 
+  // Habits added via Settings aren't in the static DAILY_SCHEDULE — group them
+  // by block so they render alongside the scheduled rows.
+  const customHabitsByBlock = useMemo(() => {
+    const scheduled = getScheduledHabitNames();
+    const groups = new Map<ScheduleBlock['id'], Habit[]>();
+    for (const habit of state.habits) {
+      if (scheduled.has(habit.name)) continue;
+      if (!habit.active) continue;
+      if (!isExpectedOn(habit, todayDate)) continue;
+      const blockId = TIME_OF_DAY_TO_BLOCK[habit.timeOfDay];
+      const list = groups.get(blockId) ?? [];
+      list.push(habit);
+      groups.set(blockId, list);
+    }
+    return groups;
+  }, [state.habits, todayDate]);
+
   const hasUncheckedAdHoc = todayTasks.some((t) => !t.completed);
   const showCTA = now.getHours() >= PLAN_HOUR_GATE || hasUncheckedAdHoc;
 
@@ -82,31 +101,48 @@ export function TodayView({ tracker }: Props) {
           </section>
         )}
 
-        {DAILY_SCHEDULE.map((block) => (
-          <ScheduleBlockSection
-            key={block.id}
-            block={block}
-            renderHabit={(item) => {
-              const habit = findHabitByName(state.habits, item.habitName);
-              // Deleted or archived scheduled habits drop out of Today
-              // entirely — no placeholder, no crossed-out row.
-              if (!habit || !habit.active) return null;
-              if (!isExpectedOn(habit, todayDate)) return null;
-              const displayName = item.displayLabel ? item.displayLabel(todayDate) : undefined;
-              return (
-                <HabitRow
-                  key={habit.id}
-                  habit={habit}
-                  checked={completedToday.includes(habit.id)}
-                  displayName={displayName}
-                  milestone={habit.milestoneId ? milestonesById.get(habit.milestoneId) : undefined}
-                  onToggle={() => toggleHabit(habit.id, today)}
-                  onLongPress={() => setEditingHabit(habit)}
-                />
-              );
-            }}
-          />
-        ))}
+        {DAILY_SCHEDULE.map((block) => {
+          const renderHabitFromSchedule: RenderHabit = (item) => {
+            const habit = findHabitByName(state.habits, item.habitName);
+            // Deleted or archived scheduled habits drop out of Today
+            // entirely — no placeholder, no crossed-out row.
+            if (!habit || !habit.active) return null;
+            if (!isExpectedOn(habit, todayDate)) return null;
+            const displayName = item.displayLabel ? item.displayLabel(todayDate) : undefined;
+            return (
+              <HabitRow
+                key={habit.id}
+                habit={habit}
+                checked={completedToday.includes(habit.id)}
+                displayName={displayName}
+                milestone={habit.milestoneId ? milestonesById.get(habit.milestoneId) : undefined}
+                onToggle={() => toggleHabit(habit.id, today)}
+                onLongPress={() => setEditingHabit(habit)}
+              />
+            );
+          };
+
+          const customHabits = customHabitsByBlock.get(block.id) ?? [];
+          const customRows = customHabits.map((habit) => (
+            <HabitRow
+              key={habit.id}
+              habit={habit}
+              checked={completedToday.includes(habit.id)}
+              milestone={habit.milestoneId ? milestonesById.get(habit.milestoneId) : undefined}
+              onToggle={() => toggleHabit(habit.id, today)}
+              onLongPress={() => setEditingHabit(habit)}
+            />
+          ));
+
+          return (
+            <ScheduleBlockSection
+              key={block.id}
+              block={block}
+              renderHabit={renderHabitFromSchedule}
+              extraRows={customRows}
+            />
+          );
+        })}
       </div>
 
       <AnimatePresence>{showCTA && <PlanTomorrowCTA onClick={() => setPlanOpen(true)} />}</AnimatePresence>
@@ -152,12 +188,18 @@ function Hero() {
   );
 }
 
+type RenderHabit = (
+  item: Extract<ScheduleBlock['items'][number], { kind: 'habit' }>,
+) => React.ReactNode;
+
 function ScheduleBlockSection({
   block,
   renderHabit,
+  extraRows = [],
 }: {
   block: ScheduleBlock;
-  renderHabit: (item: Extract<ScheduleBlock['items'][number], { kind: 'habit' }>) => React.ReactNode;
+  renderHabit: RenderHabit;
+  extraRows?: React.ReactNode[];
 }) {
   const rendered: React.ReactNode[] = [];
   for (const item of block.items) {
@@ -168,6 +210,7 @@ function ScheduleBlockSection({
       if (node) rendered.push(node);
     }
   }
+  for (const row of extraRows) rendered.push(row);
   if (rendered.length === 0) return null;
 
   return (
