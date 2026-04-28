@@ -16,6 +16,8 @@ import { ALL_CATEGORIES, CATEGORY_COLORS } from '@/lib/categories';
 import { todayKey } from '@/lib/dates';
 import { useLongPress } from '@/hooks/useLongPress';
 import { useTracker } from '@/hooks/useTracker';
+import { useSession } from '@/hooks/useSession';
+import { supabase } from '@/lib/supabase';
 import { EditHabitDialog } from '@/components/today/EditHabitDialog';
 import { EditMilestoneDialog } from '@/components/milestones/EditMilestoneDialog';
 import { MilestoneCard } from '@/components/milestones/MilestoneCard';
@@ -48,6 +50,7 @@ export function SettingsView({ tracker }: Props) {
 
   const [resetOpen, setResetOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { session } = useSession();
 
   const habitsByCategory = useMemo(() => {
     const map = new Map<Category, Habit[]>();
@@ -180,8 +183,26 @@ export function SettingsView({ tracker }: Props) {
         </div>
       </Section>
 
+      {session && (
+        <Section title="Account">
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate text-xs text-muted-foreground">{session.user.email}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                supabase.auth.signOut();
+                toast.success('Signed out');
+              }}
+            >
+              Sign out
+            </Button>
+          </div>
+        </Section>
+      )}
+
       <Section title="About">
-        <p className="font-numeric text-xs text-muted-foreground">Tracker · v0.1 · localStorage</p>
+        <p className="font-numeric text-xs text-muted-foreground">Tracker · v0.1 · synced</p>
       </Section>
 
       <EditHabitDialog

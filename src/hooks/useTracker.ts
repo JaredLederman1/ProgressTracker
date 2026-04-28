@@ -13,6 +13,9 @@ import {
   loadState,
   saveState,
 } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
+
+const LOCAL_UPDATED_AT_KEY = 'tracker.v1.updatedAt';
 
 type HabitInput = Omit<Habit, 'id' | 'createdAt' | 'active'> & { active?: boolean };
 type AdHocTaskInput = Omit<AdHocTask, 'id' | 'createdAt' | 'completed'> & {
@@ -29,9 +32,57 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-export function useTracker() {
+export function useTracker(userId: string | null) {
   const [state, setState] = useState<AppState>(() => loadState());
   const saveTimer = useRef<number | null>(null);
+  // Snapshot of the most recent state we've successfully pushed (or pulled
+  // from remote). Used to skip no-op pushes — e.g. when remote-pull replaces
+  // local state, the resulting state-change effect would otherwise push the
+  // same data right back.
+  const lastSyncedSnapshot = useRef<string | null>(null);
+  // True once we've reconciled local vs remote on sign-in. Until then we
+  // skip pushes to avoid clobbering remote with stale local data.
+  const [synced, setSynced] = useState(false);
+
+  // Pull on sign-in: compare remote updated_at to local updatedAt; newer wins.
+  useEffect(() => {
+    if (!userId) {
+      setSynced(false);
+      lastSyncedSnapshot.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('app_state')
+        .select('state, updated_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (error) {
+        console.error('Supabase pull failed', error);
+        setSynced(true); // allow pushes even on failure so edits aren't lost
+        return;
+      }
+
+      const localUpdatedAt = localStorage.getItem(LOCAL_UPDATED_AT_KEY) ?? '';
+      const remoteUpdatedAt = data?.updated_at ?? '';
+
+      if (data && remoteUpdatedAt > localUpdatedAt) {
+        const remoteState = data.state as AppState;
+        setState(remoteState);
+        localStorage.setItem(LOCAL_UPDATED_AT_KEY, remoteUpdatedAt);
+        lastSyncedSnapshot.current = JSON.stringify(remoteState);
+      }
+      setSynced(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (saveTimer.current !== null) {
@@ -39,6 +90,18 @@ export function useTracker() {
     }
     saveTimer.current = window.setTimeout(() => {
       saveState(state);
+      const snapshot = JSON.stringify(state);
+      if (userId && synced && snapshot !== lastSyncedSnapshot.current) {
+        const updatedAt = nowIso();
+        localStorage.setItem(LOCAL_UPDATED_AT_KEY, updatedAt);
+        supabase
+          .from('app_state')
+          .upsert({ user_id: userId, state, updated_at: updatedAt })
+          .then(({ error }) => {
+            if (error) console.error('Supabase push failed', error);
+            else lastSyncedSnapshot.current = snapshot;
+          });
+      }
       saveTimer.current = null;
     }, SAVE_DEBOUNCE_MS);
 
@@ -47,7 +110,7 @@ export function useTracker() {
         window.clearTimeout(saveTimer.current);
       }
     };
-  }, [state]);
+  }, [state, userId, synced]);
 
   // Flush pending save before unload so a quick close doesn't lose the last edit.
   useEffect(() => {
@@ -134,16 +197,16 @@ export function useTracker() {
         [dateKey]: { date: dateKey, completedHabits },
       };
 
-      // Newly checked + linked milestone → bump milestone count.
+      // Keep the linked milestone in sync with actual completions:
+      // check → +1, uncheck → -1 (clamped at 0).
       let nextMilestones = s.milestones;
-      if (!isChecked) {
-        const habit = s.habits.find((h) => h.id === habitId);
-        if (habit?.milestoneId) {
-          const mId = habit.milestoneId;
-          nextMilestones = s.milestones.map((m) =>
-            m.id === mId ? { ...m, count: m.count + 1 } : m,
-          );
-        }
+      const habit = s.habits.find((h) => h.id === habitId);
+      if (habit?.milestoneId) {
+        const mId = habit.milestoneId;
+        const delta = isChecked ? -1 : 1;
+        nextMilestones = s.milestones.map((m) =>
+          m.id === mId ? { ...m, count: Math.max(0, m.count + delta) } : m,
+        );
       }
 
       return { ...s, entries: nextEntries, milestones: nextMilestones };
@@ -190,10 +253,11 @@ export function useTracker() {
       );
 
       let nextMilestones = s.milestones;
-      if (nextCompleted && task.milestoneId) {
+      if (task.milestoneId) {
         const mId = task.milestoneId;
+        const delta = nextCompleted ? 1 : -1;
         nextMilestones = s.milestones.map((m) =>
-          m.id === mId ? { ...m, count: m.count + 1 } : m,
+          m.id === mId ? { ...m, count: Math.max(0, m.count + delta) } : m,
         );
       }
 

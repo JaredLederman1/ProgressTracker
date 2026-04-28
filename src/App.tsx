@@ -7,12 +7,15 @@ import { StatsView } from '@/components/stats/StatsView';
 import { MilestonesView } from '@/components/milestones/MilestonesView';
 import { MediaView } from '@/components/media/MediaView';
 import { SettingsView } from '@/components/settings/SettingsView';
+import { SignIn } from '@/components/auth/SignIn';
 import { Toaster } from '@/components/ui/sonner';
 import { useTracker } from '@/hooks/useTracker';
+import { useSession } from '@/hooks/useSession';
 import { overallCurrentStreak } from '@/lib/streaks';
 
 export default function App() {
-  const tracker = useTracker();
+  const { session, loading } = useSession();
+  const tracker = useTracker(session?.user.id ?? null);
   const [tab, setTab] = useState<TabKey>('today');
 
   const today = useMemo(() => new Date(), []);
@@ -20,6 +23,19 @@ export default function App() {
     () => overallCurrentStreak(tracker.state.habits, tracker.state.entries, today),
     [tracker.state.habits, tracker.state.entries, today],
   );
+
+  if (loading) {
+    return <div className="min-h-full" />;
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-full">
+        <SignIn />
+        <Toaster />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full">
