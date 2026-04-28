@@ -4,26 +4,49 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 
+type Step = 'email' | 'code';
+
 export function SignIn() {
+  const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setStatus('sending');
+    setBusy(true);
     setError(null);
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: window.location.origin },
+      options: { shouldCreateUser: true },
     });
+    setBusy(false);
     if (err) {
-      setStatus('error');
       setError(err.message);
     } else {
-      setStatus('sent');
+      setStep('code');
     }
+  };
+
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = code.trim();
+    if (token.length < 6) return;
+    setBusy(true);
+    setError(null);
+    const { error: err } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token,
+      type: 'email',
+    });
+    setBusy(false);
+    if (err) {
+      setError(err.message);
+    }
+    // On success the auth state listener in useSession will flip the app
+    // into the signed-in shell automatically.
   };
 
   return (
@@ -31,16 +54,13 @@ export function SignIn() {
       <div className="w-full">
         <h1 className="mb-2 text-xl font-semibold">Sign in</h1>
         <p className="mb-6 text-sm text-muted-foreground">
-          Enter your email and we&apos;ll send you a magic link.
+          {step === 'email'
+            ? "Enter your email and we'll send you a 6-digit code."
+            : `Enter the code we sent to ${email}.`}
         </p>
 
-        {status === 'sent' ? (
-          <div className="rounded-lg border border-border/60 bg-secondary/20 p-4 text-sm">
-            Check <span className="font-medium">{email}</span> for a sign-in link. You can close this
-            tab — opening the link will return you here signed in.
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="grid gap-3">
+        {step === 'email' ? (
+          <form onSubmit={sendCode} className="grid gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -51,12 +71,47 @@ export function SignIn() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={status === 'sending'}
+                disabled={busy}
               />
             </div>
-            <Button type="submit" disabled={!email.trim() || status === 'sending'}>
-              {status === 'sending' ? 'Sending…' : 'Send magic link'}
+            <Button type="submit" disabled={!email.trim() || busy}>
+              {busy ? 'Sending…' : 'Send code'}
             </Button>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </form>
+        ) : (
+          <form onSubmit={verifyCode} className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="code">Code</Label>
+              <Input
+                id="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]*"
+                maxLength={6}
+                required
+                autoFocus
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                disabled={busy}
+              />
+            </div>
+            <Button type="submit" disabled={code.trim().length < 6 || busy}>
+              {busy ? 'Verifying…' : 'Verify'}
+            </Button>
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+              onClick={() => {
+                setStep('email');
+                setCode('');
+                setError(null);
+              }}
+              disabled={busy}
+            >
+              Use a different email
+            </button>
             {error && <p className="text-xs text-destructive">{error}</p>}
           </form>
         )}
