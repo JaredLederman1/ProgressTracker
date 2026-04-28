@@ -49,7 +49,6 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     id: 'midday',
     label: 'Midday',
     items: [
-      { kind: 'reminder', id: 'midday-work', text: 'Class / work / Illumin' },
       { kind: 'habit', id: 'h-protein-shake', habitName: 'Protein shake' },
       { kind: 'reminder', id: 'caffeine-cutoff', text: 'Caffeine cutoff: noon' },
     ],
@@ -58,7 +57,6 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     id: 'afternoon',
     label: 'Afternoon',
     items: [
-      { kind: 'reminder', id: 'afternoon-work', text: 'Class / work / Illumin' },
       { kind: 'habit', id: 'h-boxing-skill', habitName: 'Boxing skill work' },
       { kind: 'habit', id: 'h-light-sparring', habitName: 'Light sparring' },
       { kind: 'habit', id: 'h-meal-prep', habitName: 'Sunday meal prep' },
@@ -70,11 +68,6 @@ export const DAILY_SCHEDULE: ScheduleBlock[] = [
     label: 'Evening',
     items: [
       { kind: 'habit', id: 'h-dinner', habitName: 'Standard dinner' },
-      {
-        kind: 'reminder',
-        id: 'social',
-        text: 'Social / friends / girlfriend / boxing or sparring on assigned days',
-      },
       { kind: 'habit', id: 'h-mobility', habitName: 'APT/posture mobility routine' },
       { kind: 'habit', id: 'h-hard-convo', habitName: 'Hard conversation' },
       { kind: 'habit', id: 'h-unstructured', habitName: 'Unstructured hour, no input' },
